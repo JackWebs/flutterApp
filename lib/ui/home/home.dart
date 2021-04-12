@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   _buildHome() {
     var _viewModelFactory = ViewModelFactory(_serviceLocator);
     final List<Widget> _pages = [
-      DashboardPage(_viewModelFactory.dashboard())
+      DashboardView(_viewModelFactory.dashboard())
     ];
 
     return Scaffold(
@@ -35,16 +35,16 @@ class _HomePageState extends State<HomePage> {
         items: [
           BottomNavigationBarItem(
               icon: new Icon(Icons.dashboard),
-              label: 'Dashboard',
+              label: 'Bills',
               activeIcon: new Icon(
-                Icons.dashboard,
+                Icons.list,
                 color: Colors.lightBlue,
               )),
           BottomNavigationBarItem(
               icon: new Icon(Icons.local_car_wash),
-              label: 'Bookings',
+              label: 'Payees',
               activeIcon: new Icon(
-                Icons.local_car_wash,
+                Icons.person,
                 color: Colors.lightBlue,
               ))
         ],

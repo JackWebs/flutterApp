@@ -1,139 +1,140 @@
+import 'dart:io';
+
 import 'package:bill_splitter/domain/constants/hiveBoxConstants.dart';
 import 'package:bill_splitter/domain/models/billItemSplit_model.dart';
 import 'package:bill_splitter/domain/models/billItem_model.dart';
 import 'package:bill_splitter/domain/models/billSplit_model.dart';
 import 'package:bill_splitter/domain/models/bill_model.dart';
+import 'package:bill_splitter/domain/models/enum/splitTypes_enum.dart';
 import 'package:bill_splitter/domain/models/payee_model.dart';
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HiveService {
+  bool _mockData;
 
-  Future<int> addBill(BillModel bill) async {
-    var bills = await Hive.openBox<BillModel>(HiveBoxConstants.billBox);
+  HiveService(this._mockData);
 
-    return await bills.add(bill);
+  late Box<BillModel> _bills;
+  late Box<PayeeModel> _payees;
+  late Box<BillSplitModel> _billSplits;
+  late Box<BillItemModel> _billItems;
+  late Box<BillItemSplitModel> _billItemSplits;
+  late Box<SplitType> _splitTypes;
+
+  initialize() async {
+    Directory appDirectory = await getApplicationDocumentsDirectory();
+    if (_mockData){
+      appDirectory = Directory('${appDirectory.path}/mock/');
+      if(await appDirectory.exists()){
+        appDirectory.delete(recursive: true);
+      }
+    }
+
+    if (!Hive.isAdapterRegistered(HiveBoxConstants.billTypeId)) Hive.registerAdapter<BillModel>(BillModelAdapter());
+    if (!Hive.isAdapterRegistered(HiveBoxConstants.payeeTypeId)) Hive.registerAdapter<PayeeModel>(PayeeModelAdapter());
+    if (!Hive.isAdapterRegistered(HiveBoxConstants.billSplitTypeId)) Hive.registerAdapter<BillSplitModel>(BillSplitModelAdapter());
+    if (!Hive.isAdapterRegistered(HiveBoxConstants.billItemTypeId)) Hive.registerAdapter<BillItemModel>(BillItemModelAdapter());
+    if (!Hive.isAdapterRegistered(HiveBoxConstants.billItemSplitTypeId)) Hive.registerAdapter<BillItemSplitModel>(BillItemSplitModelAdapter());
+    if (!Hive.isAdapterRegistered(HiveBoxConstants.splitTypeTypeId)) Hive.registerAdapter<SplitType>(SplitTypeAdapter());
+
+    Hive.init(appDirectory.path);
+
+    _bills = await Hive.openBox<BillModel>(HiveBoxConstants.billBox);
+    _payees = await Hive.openBox<PayeeModel>(HiveBoxConstants.payeeBox);
+    _billSplits = await Hive.openBox<BillSplitModel>(HiveBoxConstants.billSplitBox);
+    _billItems = await Hive.openBox<BillItemModel>(HiveBoxConstants.billItemBox);
+    _billItemSplits = await Hive.openBox<BillItemSplitModel>(HiveBoxConstants.billItemSplitBox);
+    _splitTypes = await Hive.openBox<SplitType>(HiveBoxConstants.splitTypeBox);
+
+    if (_mockData){
+      await _seedData();
+    }
   }
 
-  Future<int> addPayee(PayeeModel payee) async {
-    var payees = await Hive.openBox<PayeeModel>(HiveBoxConstants.payeeBox);
-    return await payees.add(payee);
+  _seedData() async {
+    PayeeModel payee1 = await addPayee("Rachel");
+    PayeeModel payee2 = await addPayee("Jack");
+    BillModel bill1 = await addBill(25, SplitType.Value);
+
+    BillSplitModel bill1Split1 = new BillSplitModel(10, payee1);
+    BillSplitModel bill1Split2 = new BillSplitModel(15, payee2);
+
+    await addBillSplit(bill1, payee1, bill1Split1);
+    await addBillSplit(bill1, payee2, bill1Split2);
+
+    debugPrint("Seeded Data");
+
+    debugPrint("bill 1 totalCost: " + bill1.totalCost.toString());
+
+    for (var payee in bill1.payees.toList()){
+      debugPrint("bill 1 payee: " + payee.name.toString());
+    }
+
+    for (var billSplit in bill1.billSplits.toList()){
+      debugPrint("bill 1 split: " + billSplit.payee.name.toString() + " - " + billSplit.value.toString());
+    }
+  }
+
+  Future<BillModel> addBill(double totalCost, SplitType splitType) async {
+    BillModel bill = new BillModel(totalCost, splitType, HiveList<BillItemModel>(_billItems), HiveList<BillSplitModel>(_billSplits), HiveList<PayeeModel>(_payees));
+    await _bills.add(bill);
+
+    return bill;
+  }
+
+  Future<PayeeModel> addPayee(String name) async {
+    PayeeModel payee = new PayeeModel(name, HiveList<BillModel>(_bills), HiveList<BillSplitModel>(_billSplits), HiveList<BillItemSplitModel>(_billItemSplits));
+    await _payees.add(payee);
+
+    return payee;
   }
 
   Future<int> addBillSplit(BillModel bill, PayeeModel payee, BillSplitModel billSplit) async {
-    var billSplits = await Hive.openBox<BillSplitModel>(HiveBoxConstants.billSplitBox);
-    var key = await billSplits.add(billSplit);
+    var key = await _billSplits.add(billSplit);
 
-    bill.billSplits = HiveList(billSplits);
     bill.billSplits.add(billSplit);
+    bill.payees.add(payee);
     bill.save();
 
-    payee.billSplits = HiveList(billSplits);
     payee.billSplits.add(billSplit);
+    payee.bills.add(bill);
     payee.save();
 
     return key;
   }
 
-  Future<int> addBillItem(BillModel bill, BillItemModel billItem) async {
-    var billItems = await Hive.openBox<BillItemModel>(HiveBoxConstants.billItemBox);
-    var key = await billItems.add(billItem);
+  Future<int> addBillItem(double totalCost, SplitType splitType, BillModel bill) async {
+    BillItemModel billItem = new BillItemModel(totalCost, splitType, HiveList<BillItemSplitModel>(_billItemSplits));
 
-    bill.billItems = HiveList(billItems);
     bill.billItems.add(billItem);
     bill.save();
 
-    return key;
+    return await _billItems.add(billItem);
   }
 
   Future<int> addBillItemSplit(BillItemModel billItem, PayeeModel payee, BillItemSplitModel billItemSplit) async {
-    var billItemSplits = await Hive.openBox<BillItemSplitModel>(HiveBoxConstants.billItemSplitBox);
-    var key = await billItemSplits.add(billItemSplit);
+    var key = await _billItemSplits.add(billItemSplit);
 
-    billItem.billItemSplits = HiveList(billItemSplits);
     billItem.billItemSplits.add(billItemSplit);
     billItem.save();
 
-    payee.billItemSplits = HiveList(billItemSplits);
     payee.billItemSplits.add(billItemSplit);
     payee.save();
 
     return key;
   }
 
- /* addToken(String token) {
-    var box = Hive.box(HiveBoxConstants.userBox);
-    box.put('userAuthTokenKey', token);
+  Future<List<BillModel>> getBillList() async {
+    List<BillModel> billList = new List.empty();
+
+    _bills.toMap().forEach((key, value) {billList.add(value);});
+
+    return billList;
   }
 
-  addLoginDetails(LoginDTO login) {
-    var box = Hive.box(HiveBoxConstants.userBox);
-    box.put('validUserLoginDetails', login.toJson());
+  Future<BillModel?> getBill(int key) async {
+    return _bills.get(key);
   }
-
-  String getToken() {
-    var box = Hive.box(HiveBoxConstants.userBox);
-    var token = box.get('userAuthTokenKey');
-    return token;
-  }
-
-  String getLoginDetails() {
-    var box = Hive.box(HiveBoxConstants.userBox);
-    var loginJson = box.get('validUserLoginDetails');
-    return loginJson;
-  }
-
-  clearToken() {
-    var box = Hive.box(HiveBoxConstants.userBox);
-    box.delete('userAuthTokenKey');
-  }
-
-  clearCredentials() {
-    var box = Hive.box(HiveBoxConstants.userBox);
-    box.delete('validUserLoginDetails');
-  }
-
-  storeCurrentAddress(int addressId) {
-    var box = Hive.box(HiveBoxConstants.addressBox);
-    box.put('selectedAddress', addressId);
-  }
-
-  int getCurrentAddress() {
-    var box = Hive.box(HiveBoxConstants.addressBox);
-    var selectedAddress = box.get('selectedAddress');
-    return selectedAddress;
-  }
-
-  _clearCurrentAddress() {
-    var box = Hive.box(HiveBoxConstants.addressBox);
-    box.delete('selectedAddress');
-  }
-
-  storeCurrentCar(BookingCustomerCarPackageDTO customerCarPackageDTO) {
-    var box = Hive.box(HiveBoxConstants.carsBox);
-    box.add(customerCarPackageDTO.toJson());
-  }
-
-  List<BookingCustomerCarPackageDTO> getCurrentCars() {
-    var box = Hive.box(HiveBoxConstants.carsBox);
-    List<String> currentCars = [];
-    for (int i = 0; i < box.length; i++) {
-      currentCars.add(box.getAt(i));
-    }
-
-    List<BookingCustomerCarPackageDTO> cars =
-    List<BookingCustomerCarPackageDTO>.from(currentCars
-        .map((car) => BookingCustomerCarPackageDTO.fromJson(car)));
-
-    return cars;
-  }
-
-  _clearCurrentCars() {
-    var box = Hive.box(HiveBoxConstants.carsBox);
-    box.clear();
-  }
-
-  clearCurrentBooking() {
-    _clearCurrentAddress();
-    _clearCurrentCars();
-  }*/
 }

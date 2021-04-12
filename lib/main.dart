@@ -1,20 +1,13 @@
+
 import 'package:bill_splitter/domain/constants/hiveBoxConstants.dart';
 import 'package:bill_splitter/infra/serviceLocator.dart';
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final appDirectory = await getApplicationDocumentsDirectory();
-  Hive.init(appDirectory.path);
-  await Hive.openBox(HiveBoxConstants.billBox);
-  await Hive.openBox(HiveBoxConstants.payeeBox);
-  await Hive.openBox(HiveBoxConstants.billSplitBox);
-  await Hive.openBox(HiveBoxConstants.billItemBox);
-  await Hive.openBox(HiveBoxConstants.billItemSplitBox);
-  runApp(MyApp(ServiceLocator()));
+  runApp(MyApp(ServiceLocator(mockData: true)));
 }
 
 class MyApp extends StatefulWidget {
@@ -34,7 +27,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _serviceLocator.start().then((x) async {
-      await seedData();
       await _serviceLocator.navigationManager.progressToHome();
     });
   }
@@ -48,9 +40,6 @@ class _MyAppState extends State<MyApp> {
             primarySwatch: Colors.lightBlue,
             appBarTheme: AppBarTheme(backgroundColor: HexColor("#3c99a0"))),
         home: Container(color: HexColor("#3c99a0")));
-  }
-
-  seedData() async {
   }
 
   @override

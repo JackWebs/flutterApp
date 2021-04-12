@@ -6,22 +6,24 @@ import 'package:flutter/material.dart';
 
 class ServiceLocator implements Startable {
   /// Services
-  HiveService hiveService;
+  late HiveService hiveService;
 
   /// UI
-  NavigationManager navigationManager;
+  late NavigationManager navigationManager;
 
   /// Infra
-  ViewModelFactory viewModelFactory;
+  late ViewModelFactory viewModelFactory;
 
   /// Global State
   //DashboardViewModel dashboardViewModel;
 
   /// Creates a new container for our services and instantiates them
-  ServiceLocator() {
+  ServiceLocator({bool mockData = false}) {
     viewModelFactory = ViewModelFactory(this);
-    hiveService = HiveService();
+    hiveService = HiveService(mockData);
     navigationManager = NavigationManager(viewModelFactory);
+
+    hiveService.initialize();
     /*dashboardViewModel = DashboardViewModel(
         apiService, hiveService, navigationManager, authManager);*/
   }

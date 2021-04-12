@@ -1,9 +1,12 @@
+import 'package:bill_splitter/domain/constants/hiveBoxConstants.dart';
 import 'package:hive/hive.dart';
 
-@HiveType(typeId: 2)
+part 'billItemSplit_model.g.dart';
+
+@HiveType(typeId: HiveBoxConstants.billItemSplitTypeId)
 class BillItemSplitModel extends HiveObject {
   @HiveField(0)
   double value;
-  /*int billItemId;
-  int payeeId;*/
+
+  BillItemSplitModel(this.value);
 }

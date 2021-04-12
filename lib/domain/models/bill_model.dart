@@ -1,16 +1,30 @@
+
+import 'package:bill_splitter/domain/constants/hiveBoxConstants.dart';
+import 'package:bill_splitter/domain/models/billItem_model.dart';
+import 'package:bill_splitter/domain/models/billSplit_model.dart';
+import 'package:bill_splitter/domain/models/enum/splitTypes_enum.dart';
+import 'package:bill_splitter/domain/models/payee_model.dart';
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
-@HiveType(typeId: 0)
+part 'bill_model.g.dart';
+
+@HiveType(typeId: HiveBoxConstants.billTypeId)
 class BillModel extends HiveObject{
   @HiveField(0)
   double totalCost;
 
   @HiveField(1)
-  HiveList billItems;
+  SplitType splitType;
 
   @HiveField(2)
-  HiveList billSplits;
+  HiveList<BillItemModel> billItems;
 
   @HiveField(3)
-  HiveList payees;
+  HiveList<BillSplitModel> billSplits;
+
+  @HiveField(4)
+  HiveList<PayeeModel> payees;
+
+  BillModel(this.totalCost, this.splitType, this.billItems, this.billSplits, this.payees);
 }

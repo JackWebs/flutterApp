@@ -3,12 +3,12 @@ import 'package:bill_splitter/ui/dashboard/dashboardViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardView extends StatelessWidget {
   final DashboardViewModel viewModel;
 
-  const DashboardPage(
+  const DashboardView(
       this.viewModel, {
-        Key key,
+        Key? key,
       }) : super(key: key);
 
   @override
@@ -22,6 +22,11 @@ class DashboardPage extends StatelessWidget {
               child: Text('Dashboard',
                   style: GoogleFonts.raleway(color: Colors.white))),
         ),
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+          )
+        )
       ),
     );
   }
