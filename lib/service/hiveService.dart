@@ -127,10 +127,10 @@ class HiveService {
   }
 
   Future<List<BillModel>> getBillList() async {
-    List<BillModel> billList = new List.empty();
+    List<BillModel> billList = [];
 
     _bills.toMap().forEach((key, value) {billList.add(value);});
-
+    debugPrint("hiveService.getBillList: " + billList.length.toString());
     return billList;
   }
 

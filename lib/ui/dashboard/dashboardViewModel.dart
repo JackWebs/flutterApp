@@ -2,6 +2,7 @@ import 'package:bill_splitter/domain/models/bill_model.dart';
 import 'package:bill_splitter/helpers/viewModel.dart';
 import 'package:bill_splitter/service/hiveService.dart';
 import 'package:bill_splitter/ui/navigationManager.dart';
+import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
 
 part 'dashboardViewModel.g.dart';
@@ -14,6 +15,8 @@ abstract class _DashboardViewModel extends ViewModel with Store {
 
   _DashboardViewModel(this._hiveService, this._navigationManager);
 
-  @computed
-  Future<List<BillModel>> get bills async => await _hiveService.getBillList();
+  @action
+  Future<List<BillModel>> getBills() async{
+    return await _hiveService.getBillList();
+  }
 }

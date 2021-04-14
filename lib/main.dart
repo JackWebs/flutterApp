@@ -5,9 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:hive/hive.dart';
 
+import 'infra/serviceLocator.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp(ServiceLocator(mockData: true)));
+  ServiceLocator serviceLocator = ServiceLocator(mockData: true);
+  await serviceLocator.hiveService.initialize();
+  runApp(MyApp(serviceLocator));
 }
 
 class MyApp extends StatefulWidget {

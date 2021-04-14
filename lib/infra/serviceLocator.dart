@@ -22,8 +22,6 @@ class ServiceLocator implements Startable {
     viewModelFactory = ViewModelFactory(this);
     hiveService = HiveService(mockData);
     navigationManager = NavigationManager(viewModelFactory);
-
-    hiveService.initialize();
     /*dashboardViewModel = DashboardViewModel(
         apiService, hiveService, navigationManager, authManager);*/
   }
